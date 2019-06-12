@@ -23,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -102,6 +103,7 @@ public class map_Search extends AppCompatActivity implements GoogleMap.OnCameraM
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.map_search);
         mPostReference = FirebaseDatabase.getInstance().getReference();
         getFirebaseDatabase();
@@ -318,7 +320,7 @@ public class map_Search extends AppCompatActivity implements GoogleMap.OnCameraM
                 @Override//info 눌렀을때 무슨행동으로 넘어갈지.
                 public void onInfoWindowClick(Marker marker) {
                     if(infowindow.containsKey(marker.getTitle())){
-                        Intent intent = new Intent(map_Search.this, UserActivity.class).putExtra("cafe_name",marker.getTitle()).putExtra("class","map").putExtra("uid","uid");
+                        Intent intent = new Intent(map_Search.this, UserActivity.class).putExtra("cafe_name",marker.getTitle()).putExtra("class","map").putExtra("uid",uid);
                         Log.d("A->B 액티비티먼저전환", "onInfoWindowClick: cafename : " + marker.getTitle());
                         startActivity(intent);
                     }

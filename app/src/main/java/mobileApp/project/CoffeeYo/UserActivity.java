@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -43,10 +44,12 @@ import com.google.firebase.database.ValueEventListener;
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class UserActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, ReserveFragment.OnFragmentInteractionListener,
-        User_Finished_Order.OnFragmentInteractionListener, NameSearch.OnFragmentInteractionListener, User_Order.OnFragmentInteractionListener {
+        User_Finished_Order.OnFragmentInteractionListener, NameSearch.OnFragmentInteractionListener, User_Order.OnFragmentInteractionListener, LoadingCFragment.OnFragmentInteractionListener {
     private Fragment User_Finished_Order;
     private Fragment NameSearch;
     private Fragment ReserveFragment;
@@ -55,6 +58,8 @@ public class UserActivity extends AppCompatActivity
     private DatabaseReference mPostReference;
     String mymoney = "";
     String myemail = "";
+    String myname = "";
+    String mycafe_name = "";
     ListView listView;
     ArrayList<String> data;
     ArrayAdapter<String> arrayAdapter;
@@ -75,6 +80,8 @@ public class UserActivity extends AppCompatActivity
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_user);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -84,7 +91,7 @@ public class UserActivity extends AppCompatActivity
         data = new ArrayList<String>();
         listView = (ListView)findViewById(R.id.orderlist);
         //uid = intent.getStringExtra("uid");
-
+        classname = intent.getStringExtra("class");
         NameSearch = new NameSearch();
         User_Finished_Order = new User_Finished_Order();
         Bundle bundle1 = new Bundle(1); // 파라미터는 전달할 데이터 개수
@@ -94,12 +101,11 @@ public class UserActivity extends AppCompatActivity
         User_Order = new User_Order();
         Bundle bundle = new Bundle(1); // 파라미터는 전달할 데이터 개수
 
-
+        uid = intent.getStringExtra("uid");
 
         mPostReference = FirebaseDatabase.getInstance().getReference();
         if(classname.equals("map")){
             cafename = intent.getStringExtra("cafe_name");
-            uid = intent.getStringExtra("uid");
             Fragment User_Order = new User_Order();
             Bundle bundle2 = new Bundle(1); // 파라미터는 전달할 데이터 개수
             bundle2.putString("cafe_name", cafename);
@@ -109,7 +115,8 @@ public class UserActivity extends AppCompatActivity
             transaction.addToBackStack(null);
             transaction.commit();
         }else{
-            uid = intent.getStringExtra("uid");
+            cafename = intent.getStringExtra("cafe_name");
+
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.replace(R.id.content_main, ReserveFragment);
             bundle.putString("uid", uid);
@@ -198,7 +205,7 @@ public class UserActivity extends AppCompatActivity
         getMenuInflater().inflate(R.menu.menu_right_side, menu);
         return true;
     }
-///
+    ///
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -217,15 +224,6 @@ public class UserActivity extends AppCompatActivity
             default :
                 return super.onOptionsItemSelected(null);
         }
-        /*if (id == R.id.action_right_menu) {
-            if (drawer.isDrawerOpen(GravityCompat.END)) {
-                //drawer.closeDrawer(GravityCompat.END);
-            } else {
-                drawer.openDrawer(GravityCompat.END);
-            }
-            return true;
-        }*/
-
 
     }
 
@@ -239,20 +237,26 @@ public class UserActivity extends AppCompatActivity
 
         if (id == R.id.nav_reserve) {
             // Handle the camera action
+            Toast.makeText(UserActivity.this, "이름검색을 선택하셨습니다.", Toast.LENGTH_SHORT).show();
             transaction.replace(R.id.content_main, NameSearch);
-            transaction.addToBackStack(null);
             transaction.commit();
         } else if (id == R.id.nav_menu) {
+            Toast.makeText(UserActivity.this, "주문 내역를 선택하셨습니다.", Toast.LENGTH_SHORT).show();
             transaction.replace(R.id.content_main, User_Finished_Order);
-            transaction.addToBackStack(null);
             transaction.commit();
         } else if (id == R.id.nav_searchmap) {
+            Toast.makeText(UserActivity.this, "지도검색을 선택하셨습니다.", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(UserActivity.this, map_Search.class).putExtra("uid",uid);
-            transaction.addToBackStack(null);
             startActivity(intent);
         } else if (id == R.id.nav_star) {
+            Toast.makeText(UserActivity.this, "충전을 선택하셨습니다.", Toast.LENGTH_SHORT).show();
+            postFirebaseDatabase(true);
             Intent intent = new Intent(UserActivity.this, NiceMainActivity.class);
-            transaction.addToBackStack(null);
+
+            startActivity(intent);
+        }  else if (id == R.id.nav_cvt2mgr) {
+            Toast.makeText(UserActivity.this, "매니저 모드를 선택하셨습니다.", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(UserActivity.this, ManagerActivity.class).putExtra("uid",uid).putExtra("cafe_name",mycafe_name).putExtra("class","user");
             startActivity(intent);
         }
 
@@ -263,6 +267,17 @@ public class UserActivity extends AppCompatActivity
     @Override
     public void onFragmentInteraction(Uri uri) {
 
+    }
+    public void postFirebaseDatabase(boolean add){ //firebase database로 데이터를 보내는 함수.
+        Map<String, Object> childUpdates = new HashMap<>();
+        Map<String, Object> postValues = null;
+        String money = String.valueOf(Integer.parseInt(mymoney) + 10000);
+        if(add){
+            FirebasePost post = new FirebasePost(myemail, myname, uid, money, mycafe_name);
+            postValues = post.toMap();
+        }
+        childUpdates.put("/user_list/" + uid, postValues); //여기서 추가 - 이름을 뭘로할지 /memo_list/title 의 이름으로 만들어짐.
+        mPostReference.updateChildren(childUpdates);
     }
     public void signOut() {
 
@@ -330,6 +345,8 @@ public class UserActivity extends AppCompatActivity
                     if (uid.equals(list.get(j)[2])) {
                         myemail = list.get(j)[0];
                         mymoney = list.get(j)[3];
+                        myname = list.get(j)[1];
+                        mycafe_name = list.get(j)[4];
                         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
                         View headerView = navigationView.getHeaderView(0);
                         TextView useremail = (TextView) headerView.findViewById(R.id.myemail);

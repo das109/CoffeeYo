@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 
 
 public class NameSearch extends Fragment {
@@ -47,7 +47,7 @@ public class NameSearch extends Fragment {
     private ArrayAdapter<String> arrayAdapter;
 
     private EditText editSearch;
-
+    ArrayList<String> ar = new ArrayList<>();
 
 
 
@@ -103,7 +103,8 @@ public class NameSearch extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Fragment User_Order = new User_Order();
-                cafe_name = data.get(position);
+                cafe_name = parent.getItemAtPosition(position).toString();
+                //cafe_name = data.get(position);
                 Bundle bundle = new Bundle(1); // 파라미터는 전달할 데이터 개수
                 bundle.putString("cafe_name", cafe_name);
                 User_Order.setArguments(bundle);
@@ -163,7 +164,7 @@ public class NameSearch extends Fragment {
                 Log.d("onDataChange", "Data is updated");
 
                 data.clear();
-
+                ar.clear();
                 for(DataSnapshot postSnapshot: dataSnapshot.getChildren()){
                     String id_key =  postSnapshot.getKey();
                     String value = (String) postSnapshot.getValue();
@@ -172,6 +173,7 @@ public class NameSearch extends Fragment {
                     String[] info = {get.cafe_name};
                     String result = info[0];
                     data.add(result);
+                    ar.add(result);
                     Log.d("getFirebaseDatabase", "key: " + id_key);
                     Log.d("getFirebaseDatabase", "info: " + info[0]);
 
